@@ -442,7 +442,7 @@ const pageTitle = dict.page.calculatorTitle;
             class="calc-input has-prefix"
             type="text"
             id="calc-monthlySaving"
-            value="200,00"
+            value="100,00"
           />
         </div>
       </div>
@@ -454,7 +454,7 @@ const pageTitle = dict.page.calculatorTitle;
             class="calc-input has-suffix"
             type="number"
             id="calc-period"
-            value="20"
+            value="1"
             min="1"
             max="999"
             step="1"
@@ -567,6 +567,7 @@ const pageTitle = dict.page.calculatorTitle;
               <span class="calc-legend-dot" style="background: #ff9776"
               ></span>Interest
             </span>
+          </div> <span> <button id="save-btn">Save</button> </span></div>
           </div>
         </div>
       </div>
@@ -602,6 +603,7 @@ const pageTitle = dict.page.calculatorTitle;
   </div>
 
   <script>
+    let lastCalculation: { startCapital: number; monthlySaving: number; years: number; annualRate: number; interval: string; finalBalance: number; totalInvested: number; totalInterest: number; rows: { period: number; key: number; balance: number; totalInvested: number; totalInterest: number; periodInterest: number; overrideRate: string | number; }[]; } | null = null;
     let calcTimeout: ReturnType<typeof setTimeout> | null = null;
 
     function scheduleCalc() {
@@ -813,6 +815,18 @@ const pageTitle = dict.page.calculatorTitle;
 
         tbody.appendChild(tr);
       }
+
+      lastCalculation = {
+  startCapital,
+  monthlySaving,
+  years,
+  annualRate,
+  interval,
+  finalBalance: balance,
+  totalInvested,
+  totalInterest,
+  rows
+};
     }
 
     ["calc-startCapital", "calc-monthlySaving", "calc-rate"].forEach((id) => {
@@ -856,5 +870,17 @@ const pageTitle = dict.page.calculatorTitle;
 
     // Show default result on page load
     runCalculation();
+
+    document.getElementById("save-btn")?.addEventListener("click", async () => {
+  if (!lastCalculation) return;
+
+  await fetch("/api/save-calculation", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(lastCalculation)
+  });
+
+  console.log("Saved to DB!");
+});
   </script>
 </BaseLayout>

@@ -14,7 +14,9 @@
     {
       "binding": "DB",
 	  "database_name": "vankdb",
-      "database_id": "8b54f8bb-0957-490d-8312-611d4c6682a0"
+      "database_id": "8b54f8bb-0957-490d-8312-611d4c6682a0",
+	  "remote": true, // if false local db used
+	  "migrations_dir": "drizzle/migrations" // path to migrations directory
     }
   ]
 }
