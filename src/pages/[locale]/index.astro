@@ -3,11 +3,36 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Greeting from '../../components/Greeting';
 import { getDict } from "../../i18n/langtranslations";
 
+import { env } from 'cloudflare:workers';
+// Test D1 connection
+let dbResult = null;
+let dbError = null;
+
+await env.DB.prepare(`
+  CREATE TABLE IF NOT EXISTS test_table (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message TEXT
+  )
+`).run();
+
+const tables = await env.DB.prepare(`
+  SELECT name
+  FROM sqlite_master
+  WHERE type='table'
+`).all();
+
+dbResult = tables.results;
+
 const lang = Astro.params.locale || "en";
 const dict = getDict(lang);
 const pageTitle = dict.page.homeTitle;
 ---
 <BaseLayout pageTitle={pageTitle}>
   <h2>My awesome blog subtitle</h2>
+  <p>D1 Result: {JSON.stringify(dbResult)}</p>
+
+  {dbError && (
+    <p style="color:red">Database Error: {dbError}</p>
+  )}
   <Greeting client:load messages={["Hej", "Hallo", "Hola", "Habari"]} />
 </BaseLayout>

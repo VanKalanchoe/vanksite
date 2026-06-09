@@ -9,5 +9,12 @@
 	},
 	"observability": {
 		"enabled": true
-	}
+	},
+	"d1_databases": [
+    {
+      "binding": "DB",
+	  "database_name": "vankdb",
+      "database_id": "8b54f8bb-0957-490d-8312-611d4c6682a0"
+    }
+  ]
 }
