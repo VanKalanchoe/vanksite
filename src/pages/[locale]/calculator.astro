@@ -871,16 +871,23 @@ const pageTitle = dict.page.calculatorTitle;
     // Show default result on page load
     runCalculation();
 
-    document.getElementById("save-btn")?.addEventListener("click", async () => {
+document.getElementById("save-btn")?.addEventListener("click", async () => {
   if (!lastCalculation) return;
 
-  await fetch("/api/save-calculation", {
+  const res = await fetch("/api/save-calculation", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(lastCalculation)
+    body: JSON.stringify(lastCalculation),
   });
 
-  console.log("Saved to DB!");
+  const data = await res.json();
+
+  if (!res.ok) {
+    console.error("Save failed:", data);
+    return;
+  }
+
+  console.log("Saved to DB!", data);
 });
   </script>
 </BaseLayout>

@@ -4,14 +4,15 @@ import { env } from "cloudflare:workers";
 import { z } from 'astro/zod';
 
 const CalculationSchema = z.object({
-  startCapital: z.number(),
-  monthlySaving: z.number(),
-  years: z.number(),
-  annualRate: z.number(),
+  startCapital: z.coerce.number(),
+  monthlySaving: z.coerce.number(),
+  years: z.coerce.number(),
+  annualRate: z.coerce.number(),
   interval: z.enum(["monthly", "quarterly", "yearly"]),
-  finalBalance: z.number(),
-  totalInvested: z.number(),
-  totalInterest: z.number(),
+  finalBalance: z.coerce.number(),
+  totalInvested: z.coerce.number(),
+  totalInterest: z.coerce.number(),
+
   rows: z.array(
     z.object({
       period: z.number(),
@@ -19,19 +20,21 @@ const CalculationSchema = z.object({
       totalInvested: z.number(),
       totalInterest: z.number(),
       periodInterest: z.number(),
-      overrideRate: z.number().nullable(),
+
+      overrideRate: z.coerce.number().nullable(),
     })
   ),
 });
+
 export async function POST({ request }: { request: Request }) {
-    const userId = "user-123"; // TODO: Replace with actual user ID from auth
+    const userId = "user-1233"; // TODO: Replace with actual user ID from auth
   const db = getDb(env.DB);
 
   const resultparse = CalculationSchema.safeParse(await request.json());
 
 if (!resultparse.success) {
   return Response.json(
-    { error: resultparse.error.flatten() },
+    { error: z.treeifyError(resultparse.error) },
     { status: 400 }
   );
 }

@@ -6,7 +6,7 @@ import { eq, inArray } from "drizzle-orm";
 export async function GET() {
   const db = getDb(env.DB);
 
-  const userId = "user-123"; // temporary hardcoded user
+  const userId = "user-1233"; // temporary hardcoded user
 
   // 1. Only this user's calculations
   const userCalculations = await db
