@@ -1,0 +1,12 @@
+---
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { getDict } from "../i18n/langtranslations";
+
+const lang = Astro.params.locale || "en";
+const dict = getDict(lang);
+---
+
+<div id="main-menu" class="nav-links">
+  <a href={getRelativeLocaleUrl(lang, "")}>{dict.nav.home}</a>
+  <a href={getRelativeLocaleUrl(lang, "calculator")}>{dict.nav.calculator}</a>
+</div>
