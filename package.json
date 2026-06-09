@@ -20,6 +20,7 @@
     "@astrojs/mdx": "^6.0.2",
     "@astrojs/preact": "^5.1.5",
     "@astrojs/sitemap": "^3.7.3",
+    "@clerk/astro": "^3.3.3",
     "@tailwindcss/vite": "^4.3.0",
     "astro": "^6.4.4",
     "drizzle-orm": "^0.45.2",
@@ -31,6 +32,6 @@
     "vite": "^7"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.31.10"
+    "drizzle-kit": "^0.18.1"
   }
 }

@@ -1,6 +1,7 @@
-import { defineMiddleware } from "astro:middleware";
+import { defineMiddleware, sequence } from "astro:middleware";
+import { clerkMiddleware, createRouteMatcher } from '@clerk/astro/server';
 
-export const onRequest = defineMiddleware((context, next) => {
+export const localeReq = defineMiddleware((context, next) => {
   if (context.url.pathname === "/") {
     return context.redirect(
       `/${context.preferredLocale || "en"}/`
@@ -9,3 +10,15 @@ export const onRequest = defineMiddleware((context, next) => {
 
   return next();
 });
+
+const isProtectedRoute = createRouteMatcher([
+  '/de/calculator(.*)',
+]);
+
+export const clerkReq = clerkMiddleware((auth, context) => {
+  if (!auth().userId && isProtectedRoute(context.request)) {
+    return auth().redirectToSignIn();
+  }
+});
+
+export const onRequest = sequence(localeReq, clerkReq);

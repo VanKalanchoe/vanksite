@@ -1,7 +1,7 @@
 import { getDb } from "../../db/client";
 import { calculations, calculationRows } from "../../db/schema";
 import { env } from "cloudflare:workers";
-import { z } from 'astro/zod';
+import { z } from "astro/zod";
 
 const CalculationSchema = z.object({
   startCapital: z.coerce.number(),
@@ -22,37 +22,51 @@ const CalculationSchema = z.object({
       periodInterest: z.number(),
 
       overrideRate: z.coerce.number().nullable(),
-    })
+    }),
   ),
 });
 
-export async function POST({ request }: { request: Request }) {
-    const userId = "user-1233"; // TODO: Replace with actual user ID from auth
+export async function POST({
+  request,
+  locals,
+}: {
+  request: Request;
+  locals: any;
+}) {
+  const { isAuthenticated, userId } = locals.auth();
+
+  if (!isAuthenticated || !userId) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  
   const db = getDb(env.DB);
 
   const resultparse = CalculationSchema.safeParse(await request.json());
 
-if (!resultparse.success) {
-  return Response.json(
-    { error: z.treeifyError(resultparse.error) },
-    { status: 400 }
-  );
-}
+  if (!resultparse.success) {
+    return Response.json(
+      { error: z.treeifyError(resultparse.error) },
+      { status: 400 },
+    );
+  }
 
-const body = resultparse.data;
+  const body = resultparse.data;
 
-  const result = await db.insert(calculations).values({
-    userId,
-    startCapital: body.startCapital,
-    monthlySaving: body.monthlySaving,
-    years: body.years,
-    annualRate: body.annualRate,
-    interval: body.interval,
-    finalBalance: body.finalBalance,
-    totalInvested: body.totalInvested,
-    totalInterest: body.totalInterest,
-    createdAt: Date.now(),
-  }).returning({ id: calculations.id });
+  const result = await db
+    .insert(calculations)
+    .values({
+      userId,
+      startCapital: body.startCapital,
+      monthlySaving: body.monthlySaving,
+      years: body.years,
+      annualRate: body.annualRate,
+      interval: body.interval,
+      finalBalance: body.finalBalance,
+      totalInvested: body.totalInvested,
+      totalInterest: body.totalInterest,
+      createdAt: Date.now(),
+    })
+    .returning({ id: calculations.id });
 
   const id = result[0].id;
 
@@ -65,7 +79,7 @@ const body = resultparse.data;
       totalInterest: r.totalInterest,
       periodInterest: r.periodInterest,
       overrideRate: r.overrideRate || null,
-    }))
+    })),
   );
 
   return Response.json({ success: true, id });

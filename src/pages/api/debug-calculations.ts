@@ -3,10 +3,13 @@ import { calculationRows, calculations } from "../../db/schema";
 import { env } from "cloudflare:workers";
 import { eq, inArray } from "drizzle-orm";
 
-export async function GET() {
+export async function GET({ locals }: { locals: any }) {
   const db = getDb(env.DB);
 
-  const userId = "user-1233"; // temporary hardcoded user
+    const { isAuthenticated, userId } = locals.auth();
+if (!isAuthenticated || !userId) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   // 1. Only this user's calculations
   const userCalculations = await db
