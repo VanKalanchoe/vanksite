@@ -15,7 +15,7 @@ if (!isAuthenticated || !userId) {
   const userCalculations = await db
     .select()
     .from(calculations)
-    .where(eq(calculations.userId, userId));
+    .where(eq(calculations.currentUserId, userId));
 
   // 2. If none, return early
   if (userCalculations.length === 0) {

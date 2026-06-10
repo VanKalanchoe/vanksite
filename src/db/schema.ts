@@ -3,7 +3,7 @@ import { sqliteTable, integer, text, real } from "drizzle-orm/sqlite-core";
 export const calculations = sqliteTable("calculations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
 
-   userId: text("user_id").notNull(),
+   currentUserId: text("user_id").notNull(),
 
   startCapital: integer("start_capital").notNull(),
   monthlySaving: integer("monthly_saving").notNull(),

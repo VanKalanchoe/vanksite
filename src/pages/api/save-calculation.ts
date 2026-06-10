@@ -38,7 +38,11 @@ export async function POST({
   if (!isAuthenticated || !userId) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-  
+
+    const user = await locals.currentUser()
+
+    const currentUserId = user.id;
+
   const db = getDb(env.DB);
 
   const resultparse = CalculationSchema.safeParse(await request.json());
@@ -55,7 +59,7 @@ export async function POST({
   const result = await db
     .insert(calculations)
     .values({
-      userId,
+      currentUserId,
       startCapital: body.startCapital,
       monthlySaving: body.monthlySaving,
       years: body.years,
