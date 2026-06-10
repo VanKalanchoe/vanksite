@@ -3,12 +3,20 @@ import Menu from './Menu.astro';
 import Navigation from './Navigation.astro';
 import ThemeIcon from './ThemeIcon.astro';
 import LangPicker from './langpicker.astro';
+import { Show, UserButton, SignInButton, SignUpButton } from '@clerk/astro/components'
 
 const { lang } = Astro.props;
 ---
 <header>
   <nav>
     <div>
+      <Show when="signed-out">
+        <SignInButton mode="modal" />
+        <SignUpButton mode="modal" />
+      </Show>
+      <Show when="signed-in">
+        <UserButton />
+      </Show>
       <ThemeIcon />
       <LangPicker />
       <Menu />

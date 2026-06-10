@@ -6,16 +6,20 @@ import preact from "@astrojs/preact";
 import mdx from "@astrojs/mdx";
 import tailwindcss from "@tailwindcss/vite";
 import sitemap from "@astrojs/sitemap";
+import clerk from "@clerk/astro";
 
 // https://astro.build/config
 export default defineConfig({
   site: "https://example.com",
   output: "server",
   adapter: cloudflare(),
-  integrations: [preact(), mdx(), sitemap()],
+  integrations: [preact(), mdx(), sitemap(), clerk()],
 
   vite: {
     plugins: [tailwindcss()],
+    optimizeDeps: {
+      exclude: ["@clerk/astro", "@clerk/astro/internal"],
+    }
   },
 
   i18n: {

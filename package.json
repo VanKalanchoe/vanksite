@@ -10,20 +10,28 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "generate-types": "wrangler types"
+    "generate-types": "wrangler types",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "npx wrangler d1 migrations apply vankdb --local",
+    "db:migrate:prod": "npx wrangler d1 migrations apply vankdb --remote"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.6.1",
     "@astrojs/mdx": "^6.0.2",
     "@astrojs/preact": "^5.1.5",
     "@astrojs/sitemap": "^3.7.3",
+    "@clerk/astro": "^3.3.3",
     "@tailwindcss/vite": "^4.3.0",
     "astro": "^6.4.4",
+    "drizzle-orm": "^0.45.2",
     "preact": "^10.29.2",
     "tailwindcss": "^4.3.0",
     "wrangler": "^4.98.0"
   },
   "overrides": {
     "vite": "^7"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.18.1"
   }
 }
