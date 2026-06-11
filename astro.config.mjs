@@ -10,7 +10,7 @@ import clerk from "@clerk/astro";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://vanksite.vankalanchoe.workers.dev",
+  site: "https://noxiouse.tech",
   output: "server",
   adapter: cloudflare(),
   integrations: [preact(), mdx(), sitemap(), clerk()],
