@@ -567,239 +567,256 @@ const pageTitle = dict.page.calculatorTitle;
               <span class="calc-legend-dot" style="background: #ff9776"
               ></span>Interest
             </span>
-          </div> <span> <button id="save-btn">Save</button> </span></div>
           </div>
+          <span> <button id="save-btn">Save</button> </span>
         </div>
       </div>
     </div>
   </div>
+</BaseLayout>
 
-  <!-- Year-by-Year Table -->
-  <div class="calc-breakdown">
-    <h2 class="calc-breakdown-title" id="calc-breakdown-title">
-      Year-by-Year Breakdown
-    </h2>
-    <div class="calc-table-wrap">
-      <table class="calc-table">
-        <thead>
-          <tr>
-            <th id="calc-period-header">Year</th>
-            <th>End Balance</th>
-            <th>Total Invested</th>
-            <th>Total Interest</th>
-            <th id="calc-interest-header">Interest (Year)</th>
-            <th>Override Rate %</th>
-          </tr>
-        </thead>
-        <tbody id="calc-tbody">
-          <tr>
-            <td colspan="6" class="calc-table-empty">
-              No data yet — enter your parameters and press Calculate.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+<!-- Year-by-Year Table -->
+<div class="calc-breakdown">
+  <h2 class="calc-breakdown-title" id="calc-breakdown-title">
+    Year-by-Year Breakdown
+  </h2>
+  <div class="calc-table-wrap">
+    <table class="calc-table">
+      <thead>
+        <tr>
+          <th id="calc-period-header">Year</th>
+          <th>End Balance</th>
+          <th>Total Invested</th>
+          <th>Total Interest</th>
+          <th id="calc-interest-header">Interest (Year)</th>
+          <th>Override Rate %</th>
+        </tr>
+      </thead>
+      <tbody id="calc-tbody">
+        <tr>
+          <td colspan="6" class="calc-table-empty">
+            No data yet — enter your parameters and press Calculate.
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
+</div>
 
-  <script>
-    let lastCalculation: { startCapital: number; monthlySaving: number; years: number; annualRate: number; interval: string; finalBalance: number; totalInvested: number; totalInterest: number; rows: { period: number; key: number; balance: number; totalInvested: number; totalInterest: number; periodInterest: number; overrideRate: string | number; }[]; } | null = null;
-    let calcTimeout: ReturnType<typeof setTimeout> | null = null;
+<script>
+  let lastCalculation: {
+    startCapital: number;
+    monthlySaving: number;
+    years: number;
+    annualRate: number;
+    interval: string;
+    finalBalance: number;
+    totalInvested: number;
+    totalInterest: number;
+    rows: {
+      period: number;
+      key: number;
+      balance: number;
+      totalInvested: number;
+      totalInterest: number;
+      periodInterest: number;
+      overrideRate: string | number;
+    }[];
+  } | null = null;
+  let calcTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    function scheduleCalc() {
-      if (calcTimeout !== null) clearTimeout(calcTimeout);
-      calcTimeout = setTimeout(runCalculation, 100);
+  function scheduleCalc() {
+    if (calcTimeout !== null) clearTimeout(calcTimeout);
+    calcTimeout = setTimeout(runCalculation, 100);
+  }
+  const fmt = (n: number) =>
+    new Intl.NumberFormat("de-DE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(n);
+
+  const parseGerman = (value: string) => {
+    return parseFloat(String(value).replace(/\./g, "").replace(",", ".")) || 0;
+  };
+
+  const overrides = new Map<number, number>();
+
+  function runCalculation() {
+    function getOverrideKey(month: number, compoundEveryMonths: number) {
+      return Math.ceil(month / compoundEveryMonths);
     }
-    const fmt = (n: number) =>
-      new Intl.NumberFormat("de-DE", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(n);
+    const startEl = document.getElementById(
+      "calc-startCapital",
+    ) as HTMLInputElement | null;
+    const monthlyEl = document.getElementById(
+      "calc-monthlySaving",
+    ) as HTMLInputElement | null;
+    const periodEl = document.getElementById(
+      "calc-period",
+    ) as HTMLInputElement | null;
+    const rateEl = document.getElementById(
+      "calc-rate",
+    ) as HTMLInputElement | null;
+    const intervalEl = document.getElementById(
+      "calc-interval",
+    ) as HTMLSelectElement | null;
 
-    const parseGerman = (value: string) => {
-      return (
-        parseFloat(String(value).replace(/\./g, "").replace(",", ".")) || 0
-      );
-    };
+    const resultFinal = document.getElementById("r-final");
+    const resultInvested = document.getElementById("r-invested");
+    const resultInterest = document.getElementById("r-interest");
+    const bar = document.getElementById("calc-comp-bar");
+    const empty = document.getElementById("calc-empty");
+    const results = document.getElementById("calc-results");
+    const title = document.getElementById("calc-breakdown-title");
+    const periodHeader = document.getElementById("calc-period-header");
+    const interestHeader = document.getElementById("calc-interest-header");
 
-    const overrides = new Map<number, number>();
+    // safety guard (prevents runtime crashes)
+    if (
+      !startEl ||
+      !monthlyEl ||
+      !periodEl ||
+      !rateEl ||
+      !intervalEl ||
+      !resultFinal ||
+      !resultInvested ||
+      !resultInterest ||
+      !bar ||
+      !empty ||
+      !results ||
+      !tbody ||
+      !title ||
+      !periodHeader ||
+      !interestHeader
+    )
+      return;
+    const startCapital = Math.max(0, parseGerman(startEl.value) || 0);
 
-    function runCalculation() {
-      function getOverrideKey(month: number, compoundEveryMonths: number) {
-        return Math.ceil(month / compoundEveryMonths);
-      }
-      const startEl = document.getElementById(
-        "calc-startCapital",
-      ) as HTMLInputElement | null;
-      const monthlyEl = document.getElementById(
-        "calc-monthlySaving",
-      ) as HTMLInputElement | null;
-      const periodEl = document.getElementById(
-        "calc-period",
-      ) as HTMLInputElement | null;
-      const rateEl = document.getElementById(
-        "calc-rate",
-      ) as HTMLInputElement | null;
-      const intervalEl = document.getElementById(
-        "calc-interval",
-      ) as HTMLSelectElement | null;
+    const monthlySaving = Math.max(0, parseGerman(monthlyEl.value) || 0);
 
-      const resultFinal = document.getElementById("r-final");
-      const resultInvested = document.getElementById("r-invested");
-      const resultInterest = document.getElementById("r-interest");
-      const bar = document.getElementById("calc-comp-bar");
-      const empty = document.getElementById("calc-empty");
-      const results = document.getElementById("calc-results");
-      const title = document.getElementById("calc-breakdown-title");
-      const periodHeader = document.getElementById("calc-period-header");
-      const interestHeader = document.getElementById("calc-interest-header");
+    const years = Math.min(50, Math.max(1, parseInt(periodEl.value) || 1));
 
-      // safety guard (prevents runtime crashes)
-      if (
-        !startEl ||
-        !monthlyEl ||
-        !periodEl ||
-        !rateEl ||
-        !intervalEl ||
-        !resultFinal ||
-        !resultInvested ||
-        !resultInterest ||
-        !bar ||
-        !empty ||
-        !results ||
-        !tbody ||
-        !title ||
-        !periodHeader ||
-        !interestHeader
-      )
-        return;
-      const startCapital = Math.max(0, parseGerman(startEl.value) || 0);
+    const annualRate = Math.max(0, parseGerman(rateEl.value) || 0);
 
-      const monthlySaving = Math.max(0, parseGerman(monthlyEl.value) || 0);
+    const interval = intervalEl.value;
 
-      const years = Math.min(50, Math.max(1, parseInt(periodEl.value) || 1));
+    let periodsPerYear;
+    let contributionPerPeriod;
+    let periodLabel;
+    let interestColLabel;
+    let breakdownTitle;
 
-      const annualRate = Math.max(0, parseGerman(rateEl.value) || 0);
+    if (interval === "monthly") {
+      periodsPerYear = 12;
+      contributionPerPeriod = monthlySaving;
+      periodLabel = "Month";
+      interestColLabel = "Interest (Month)";
+      breakdownTitle = "Month-by-Month Breakdown";
+    } else if (interval === "quarterly") {
+      periodsPerYear = 4;
+      contributionPerPeriod = monthlySaving * 3;
+      periodLabel = "Quarter";
+      interestColLabel = "Interest (Quarter)";
+      breakdownTitle = "Quarter-by-Quarter Breakdown";
+    } else {
+      periodsPerYear = 1;
+      contributionPerPeriod = monthlySaving * 12;
+      periodLabel = "Year";
+      interestColLabel = "Interest (Year)";
+      breakdownTitle = "Year-by-Year Breakdown";
+    }
 
-      const interval = intervalEl.value;
+    const periodRate = annualRate / periodsPerYear / 100;
+    const totalPeriods = years * periodsPerYear;
 
-      let periodsPerYear;
-      let contributionPerPeriod;
-      let periodLabel;
-      let interestColLabel;
-      let breakdownTitle;
+    let balance = startCapital;
+    let totalInvested = startCapital;
+    let prevTotalInterest = 0;
+    let accruedInterest = 0;
 
-      if (interval === "monthly") {
-        periodsPerYear = 12;
-        contributionPerPeriod = monthlySaving;
-        periodLabel = "Month";
-        interestColLabel = "Interest (Month)";
-        breakdownTitle = "Month-by-Month Breakdown";
-      } else if (interval === "quarterly") {
-        periodsPerYear = 4;
-        contributionPerPeriod = monthlySaving * 3;
-        periodLabel = "Quarter";
-        interestColLabel = "Interest (Quarter)";
-        breakdownTitle = "Quarter-by-Quarter Breakdown";
-      } else {
-        periodsPerYear = 1;
-        contributionPerPeriod = monthlySaving * 12;
-        periodLabel = "Year";
-        interestColLabel = "Interest (Year)";
-        breakdownTitle = "Year-by-Year Breakdown";
-      }
+    const rows = [];
 
-      const periodRate = annualRate / periodsPerYear / 100;
-      const totalPeriods = years * periodsPerYear;
+    let compoundEveryMonths;
 
-      let balance = startCapital;
-      let totalInvested = startCapital;
-      let prevTotalInterest = 0;
-      let accruedInterest = 0;
+    if (interval === "monthly") {
+      compoundEveryMonths = 1;
+    } else if (interval === "quarterly") {
+      compoundEveryMonths = 3;
+    } else {
+      compoundEveryMonths = 12;
+    }
 
-      const rows = [];
+    for (let month = 1; month <= years * 12; month++) {
+      // monthly deposit always happens
+      balance += monthlySaving;
+      totalInvested += monthlySaving;
 
-      let compoundEveryMonths;
+      // accumulate interest but don't credit it yet
+      const key = getOverrideKey(month, compoundEveryMonths);
+      const overrideRate = overrides.get(key);
+      const yearRate = overrideRate ?? annualRate;
 
-      if (interval === "monthly") {
-        compoundEveryMonths = 1;
-      } else if (interval === "quarterly") {
-        compoundEveryMonths = 3;
-      } else {
-        compoundEveryMonths = 12;
-      }
-
-      for (let month = 1; month <= years * 12; month++) {
-        // monthly deposit always happens
-        balance += monthlySaving;
-        totalInvested += monthlySaving;
-
-        // accumulate interest but don't credit it yet
-        const key = getOverrideKey(month, compoundEveryMonths);
-        const overrideRate = overrides.get(key);
-        const yearRate = overrideRate ?? annualRate;
-
-        accruedInterest += balance * (yearRate / 100 / 12);
-        // credit interest at selected interval
-        if (month % compoundEveryMonths === 0) {
-          balance += accruedInterest;
-          accruedInterest = 0;
-        }
-
-        // reporting row
-        if (month % compoundEveryMonths === 0) {
-          const totalInterestNow = balance - totalInvested;
-          const periodInterest = totalInterestNow - prevTotalInterest;
-
-          prevTotalInterest = totalInterestNow;
-
-          rows.push({
-            period: month / compoundEveryMonths,
-            key,
-            balance,
-            totalInvested,
-            totalInterest: totalInterestNow,
-            periodInterest,
-            overrideRate: overrides.get(key) ?? "",
-          });
-        }
+      accruedInterest += balance * (yearRate / 100 / 12);
+      // credit interest at selected interval
+      if (month % compoundEveryMonths === 0) {
+        balance += accruedInterest;
+        accruedInterest = 0;
       }
 
-      const totalInterest = balance - totalInvested;
-      const depositPct =
-        totalInvested > 0 ? (totalInvested / balance) * 100 : 100;
+      // reporting row
+      if (month % compoundEveryMonths === 0) {
+        const totalInterestNow = balance - totalInvested;
+        const periodInterest = totalInterestNow - prevTotalInterest;
 
-      resultFinal.textContent = "€ " + fmt(balance);
+        prevTotalInterest = totalInterestNow;
 
-      resultInvested.textContent = "€ " + fmt(totalInvested);
+        rows.push({
+          period: month / compoundEveryMonths,
+          key,
+          balance,
+          totalInvested,
+          totalInterest: totalInterestNow,
+          periodInterest,
+          overrideRate: overrides.get(key) ?? "",
+        });
+      }
+    }
 
-      resultInterest.textContent = "€ " + fmt(totalInterest);
+    const totalInterest = balance - totalInvested;
+    const depositPct =
+      totalInvested > 0 ? (totalInvested / balance) * 100 : 100;
 
-      bar.style.background = `linear-gradient(to right,
+    resultFinal.textContent = "€ " + fmt(balance);
+
+    resultInvested.textContent = "€ " + fmt(totalInvested);
+
+    resultInterest.textContent = "€ " + fmt(totalInterest);
+
+    bar.style.background = `linear-gradient(to right,
       rgba(255,255,255,0.35) ${depositPct}%,
       #ff9776 ${depositPct}%)`;
 
-      empty.style.display = "none";
-      results.classList.add("visible");
+    empty.style.display = "none";
+    results.classList.add("visible");
 
-      title.textContent = breakdownTitle;
+    title.textContent = breakdownTitle;
 
-      periodHeader.textContent = periodLabel;
+    periodHeader.textContent = periodLabel;
 
-      interestHeader.textContent = interestColLabel;
+    interestHeader.textContent = interestColLabel;
 
-      tbody.innerHTML = "";
+    tbody.innerHTML = "";
 
-      for (const row of rows) {
-        const tr = document.createElement("tr");
+    for (const row of rows) {
+      const tr = document.createElement("tr");
 
-        tr.innerHTML =
-          `<td>${periodLabel} ${row.period}</td>` +
-          `<td>€ ${fmt(row.balance)}</td>` +
-          `<td>€ ${fmt(row.totalInvested)}</td>` +
-          `<td class="interest">€ ${fmt(row.totalInterest)}</td>` +
-          `<td class="interest">+ € ${fmt(row.periodInterest)}</td>` +
-          `<td>
+      tr.innerHTML =
+        `<td>${periodLabel} ${row.period}</td>` +
+        `<td>€ ${fmt(row.balance)}</td>` +
+        `<td>€ ${fmt(row.totalInvested)}</td>` +
+        `<td class="interest">€ ${fmt(row.totalInterest)}</td>` +
+        `<td class="interest">+ € ${fmt(row.periodInterest)}</td>` +
+        `<td>
   <input
     class="override-rate"
     data-key="${row.key}"
@@ -813,81 +830,89 @@ const pageTitle = dict.page.calculatorTitle;
   />
 </td>`;
 
-        tbody.appendChild(tr);
-      }
-
-      lastCalculation = {
-  startCapital,
-  monthlySaving,
-  years,
-  annualRate,
-  interval,
-  finalBalance: balance,
-  totalInvested,
-  totalInterest,
-  rows
-};
+      tbody.appendChild(tr);
     }
 
-    ["calc-startCapital", "calc-monthlySaving", "calc-rate"].forEach((id) => {
-      const input = document.getElementById(id) as HTMLInputElement | null;
-
-      if (!input) return;
-
-      input.addEventListener("blur", () => {
-        const value = parseGerman(input.value);
-        input.value = fmt(value);
-      });
-    });
-
-    const btn = document.getElementById("calc-btn") as HTMLButtonElement | null;
-
-    if (btn) {
-      btn.addEventListener("click", runCalculation);
-    }
-
-    const tbody = document.getElementById("calc-tbody");
-
-    if (tbody) {
-      tbody.addEventListener("input", (e) => {
-        const target = e.target;
-
-        if (!(target instanceof HTMLInputElement)) return;
-        if (!target.classList.contains("override-rate")) return;
-
-        const key = Number(target.dataset.key);
-        const value = parseGerman(target.value);
-
-        if (!value) {
-          overrides.delete(key);
-        } else {
-          overrides.set(key, value);
-        }
-
-        scheduleCalc();
-      });
-    }
-
-    // Show default result on page load
-    runCalculation();
-
-document.getElementById("save-btn")?.addEventListener("click", async () => {
-  if (!lastCalculation) return;
-
-  const res = await fetch("/api/save-calculation", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(lastCalculation),
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    console.error("Save failed:", data);
-    return;
+    lastCalculation = {
+      startCapital,
+      monthlySaving,
+      years,
+      annualRate,
+      interval,
+      finalBalance: balance,
+      totalInvested,
+      totalInterest,
+      rows,
+    };
   }
 
-  console.log("Saved to DB!", data);
-});
-  </script>
-</BaseLayout>
+  ["calc-startCapital", "calc-monthlySaving", "calc-rate"].forEach((id) => {
+    const input = document.getElementById(id) as HTMLInputElement | null;
+
+    if (!input) return;
+
+    input.addEventListener("blur", () => {
+      const value = parseGerman(input.value);
+      input.value = fmt(value);
+    });
+  });
+
+  const btn = document.getElementById("calc-btn") as HTMLButtonElement | null;
+
+  if (btn) {
+    btn.addEventListener("click", runCalculation);
+  }
+
+  const tbody = document.getElementById("calc-tbody");
+
+  if (tbody) {
+    tbody.addEventListener("input", (e) => {
+      const target = e.target;
+
+      if (!(target instanceof HTMLInputElement)) return;
+      if (!target.classList.contains("override-rate")) return;
+
+      const key = Number(target.dataset.key);
+      const value = parseGerman(target.value);
+
+      if (!value) {
+        overrides.delete(key);
+      } else {
+        overrides.set(key, value);
+      }
+
+      scheduleCalc();
+    });
+  }
+
+  // Show default result on page load
+  runCalculation();
+
+  document.getElementById("save-btn")?.addEventListener("click", async () => {
+    if (!lastCalculation) return;
+
+    const res = await fetch("/api/save-calculation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(lastCalculation),
+    });
+
+    const SIGN_IN_URL = import.meta.env.DEV
+      ? "https://poetic-newt-10.accounts.dev/sign-in"
+      : "https://accounts.noxiouse.tech/sign-in";
+
+    if (res.status === 401) {
+      window.location.href = SIGN_IN_URL;
+      return;
+    }
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("Save failed:", data);
+      return;
+    }
+
+    console.log("Saved to DB!", data);
+  });
+</script>

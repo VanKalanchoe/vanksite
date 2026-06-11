@@ -12,7 +12,7 @@ export const localeReq = defineMiddleware((context, next) => {
 });
 
 const isProtectedRoute = createRouteMatcher([
-  '/de/calculator(.*)',
+  /* '/de/calculator(.*)', */
 ]);
 
 export const clerkReq = clerkMiddleware((auth, context) => {
