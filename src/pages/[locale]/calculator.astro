@@ -901,8 +901,10 @@ const pageTitle = dict.page.calculatorTitle;
       ? "https://poetic-newt-10.accounts.dev/sign-in"
       : "https://accounts.noxiouse.tech/sign-in";
 
+      const redirectTo = encodeURIComponent(window.location.href);
+
     if (res.status === 401) {
-      window.location.href = SIGN_IN_URL;
+      window.location.href = `${SIGN_IN_URL}?redirect_url=${redirectTo}`;
       return;
     }
 
